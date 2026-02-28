@@ -160,26 +160,12 @@ pub fn morph(
     (output_img, current_img)
 }
 
-pub fn create_morph_frames(
-    s_img: &RgbImage,
-    current_img: &Vec<Vec<u32>>,
-    num_frames: u32,
-    output_dir: &Path,
-) -> Result<(), image::ImageError> {
-    if current_img.is_empty() {
-        return Ok(());
-    }
-
+pub fn create_displacement_map(current_img: &Vec<Vec<u32>>, width: u32) -> Vec<Vec<(f64, f64)>> {
     let height = current_img.len() as u32;
-    let width = current_img[0].len() as u32;
-
-    // Calculate displacement map: source_pos -> target_pos
-    // dest_map[y][x] = (target_x, target_y) for the pixel originally at (x, y)
     let mut displacement_map = vec![vec![(0f64, 0f64); width as usize]; height as usize];
 
     for y in 0..height {
         for x in 0..width {
-            // The pixel at target (x, y) came from source index `src_idx`
             let src_idx = current_img[y as usize][x as usize];
             let src_x = src_idx % width;
             let src_y = src_idx / width;
@@ -191,38 +177,72 @@ pub fn create_morph_frames(
         }
     }
 
-    if !output_dir.exists() {
-        std::fs::create_dir_all(output_dir)?;
-    }
-
-    for f in 0..num_frames {
-        let t = f as f64 / (num_frames - 1) as f64;
-        let mut frame = RgbImage::new(width, height);
-
-        for y in 0..height {
-            for x in 0..width {
-                let (dx, dy) = displacement_map[y as usize][x as usize];
-
-                let curr_x = x as f64 + dx * t;
-                let curr_y = y as f64 + dy * t;
-
-                let ix = curr_x.round() as i32;
-                let iy = curr_y.round() as i32;
-
-                if ix >= 0 && ix < width as i32 && iy >= 0 && iy < height as i32 {
-                    frame.put_pixel(ix as u32, iy as u32, *s_img.get_pixel(x, y));
-                }
-            }
-        }
-
-        let file_name = format!("frame_{:05}.png", f);
-        let path = output_dir.join(file_name);
-        frame.save(path)?;
-
-        if f % 10 == 0 {
-            println!("Saved frame {}/{}", f, num_frames);
-        }
-    }
-
-    Ok(())
+    displacement_map
 }
+
+// pub fn create_morph_frames(
+//     s_img: &RgbImage,
+//     current_img: &Vec<Vec<u32>>,
+//     num_frames: u32,
+//     output_dir: &Path,
+// ) -> Result<(), image::ImageError> {
+//     if current_img.is_empty() {
+//         return Ok(());
+//     }
+
+//     let height = current_img.len() as u32;
+//     let width = current_img[0].len() as u32;
+
+//     // Calculate displacement map: source_pos -> target_pos
+//     // dest_map[y][x] = (target_x, target_y) for the pixel originally at (x, y)
+//     let mut displacement_map = vec![vec![(0f64, 0f64); width as usize]; height as usize];
+
+//     for y in 0..height {
+//         for x in 0..width {
+//             // The pixel at target (x, y) came from source index `src_idx`
+//             let src_idx = current_img[y as usize][x as usize];
+//             let src_x = src_idx % width;
+//             let src_y = src_idx / width;
+
+//             let dx = x as f64 - src_x as f64;
+//             let dy = y as f64 - src_y as f64;
+
+//             displacement_map[src_y as usize][src_x as usize] = (dx, dy);
+//         }
+//     }
+
+//     if !output_dir.exists() {
+//         std::fs::create_dir_all(output_dir)?;
+//     }
+
+//     for f in 0..num_frames {
+//         let t = f as f64 / (num_frames - 1) as f64;
+//         let mut frame = RgbImage::new(width, height);
+
+//         for y in 0..height {
+//             for x in 0..width {
+//                 let (dx, dy) = displacement_map[y as usize][x as usize];
+
+//                 let curr_x = x as f64 + dx * t;
+//                 let curr_y = y as f64 + dy * t;
+
+//                 let ix = curr_x.round() as i32;
+//                 let iy = curr_y.round() as i32;
+
+//                 if ix >= 0 && ix < width as i32 && iy >= 0 && iy < height as i32 {
+//                     frame.put_pixel(ix as u32, iy as u32, *s_img.get_pixel(x, y));
+//                 }
+//             }
+//         }
+
+//         let file_name = format!("frame_{:05}.png", f);
+//         let path = output_dir.join(file_name);
+//         frame.save(path)?;
+
+//         if f % 10 == 0 {
+//             println!("Saved frame {}/{}", f, num_frames);
+//         }
+//     }
+
+//     Ok(())
+// }
