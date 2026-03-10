@@ -5,6 +5,8 @@ A Rust-based image morphing application using the Iced GUI framework. It perform
 ## Showcase
 The website demo can be found [here](https://tiredsnorlax.github.io/image-morph-rust/)
 
+https://github.com/user-attachments/assets/22b910d6-8716-494d-b0e1-fe5c44b7e2c9
+
 ## Morphing Logic
 
 The core logic implements a swap-based optimization algorithm to map pixels from a source image to a target image while minimizing a combined cost function.
